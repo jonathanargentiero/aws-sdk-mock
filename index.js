@@ -102,6 +102,7 @@ function mockServiceMethod(service, client, method, replace) {
     } else {
       userArgs = args;
     }
+
     var havePromises = typeof(AWS.Promise) === 'function';
     var promise, resolve, reject;
     var makeResolved = function(value) {return new AWS.Promise(function (res) { res(value); }); };
@@ -127,6 +128,17 @@ function mockServiceMethod(service, client, method, replace) {
       }
     };
     var request = {
+      _on: {},
+      on: function(type, callback) {
+        console.log('registered ' + type + ' callback');
+        this._on[type] = callback;
+        return this;
+      },
+      send: function() {
+        console.log('invoked ' + replace.type + ' callback w/ ' + JSON.stringify(replace));
+        this._on[replace.type](replace);
+        return this;
+      },
       promise: havePromises ? function() {
         if (!promise) {
           promise = new AWS.Promise(function (resolve_, reject_) {
